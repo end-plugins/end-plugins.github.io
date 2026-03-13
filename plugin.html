@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plugin — EndstoneHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #080b0f;
+      --surface:  #0d1117;
+      --surface2: #131920;
+      --border:   #1c2330;
+      --border2:  #242e3f;
+      --accent:   #3ddc84;
+      --accent-d: #28b868;
+      --blue:     #58a6ff;
+      --orange:   #f78166;
+      --text:     #e2eaf4;
+      --muted:    #5a6a82;
+      --muted2:   #3d4e63;
+      --ff: 'Outfit', sans-serif;
+      --fm: 'IBM Plex Mono', monospace;
+      --r: 4px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--ff); min-height: 100vh; overflow-x: hidden;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(61,220,132,.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,220,132,.022) 1px, transparent 1px);
+      background-size: 36px 36px; pointer-events: none; z-index: 0;
+    }
+
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 58px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      background: rgba(8,11,15,.92); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: flex; align-items: center; gap: .55rem;
+      font-weight: 800; font-size: 1rem; letter-spacing: -.02em;
+      color: var(--text); text-decoration: none;
+    }
+    .logo-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 8px var(--accent);
+      animation: glow 2.5s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%,100% { box-shadow: 0 0 5px var(--accent); }
+      50%      { box-shadow: 0 0 16px var(--accent), 0 0 30px rgba(61,220,132,.3); }
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: .4rem;
+      font-family: var(--fm); font-size: .7rem; font-weight: 500;
+      color: var(--muted); text-decoration: none; letter-spacing: .06em;
+      text-transform: uppercase; transition: color .15s;
+    }
+    .back-btn:hover { color: var(--accent); }
+
+    .wrap {
+      position: relative; z-index: 1;
+      max-width: 860px; margin: 0 auto; padding: 3rem 2rem 6rem;
+    }
+
+    .loading-state { text-align: center; padding: 5rem 2rem; }
+    .spinner {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--border2); border-top-color: var(--accent);
+      animation: spin .6s linear infinite; margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-state p { font-family: var(--fm); font-size: .8rem; color: var(--muted); }
+
+    .plugin-header {
+      display: flex; align-items: flex-start; gap: 1.75rem;
+      padding-bottom: 2rem; margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp .35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .plugin-icon {
+      width: 88px; height: 88px; border-radius: 14px;
+      object-fit: cover; border: 1px solid var(--border2);
+      background: var(--surface2); flex-shrink: 0;
+    }
+    .icon-fallback {
+      width: 88px; height: 88px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--surface2), var(--border2));
+      border: 1px solid var(--border2); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
+    }
+    .header-info { flex: 1; min-width: 0; }
+    .plugin-name {
+      font-size: 2rem; font-weight: 800; letter-spacing: -.03em;
+      line-height: 1.1; margin-bottom: .4rem;
+    }
+    .meta-row {
+      display: flex; align-items: center; gap: .75rem;
+      flex-wrap: wrap; margin-bottom: .9rem;
+    }
+    .meta-author { font-family: var(--fm); font-size: .72rem; color: var(--blue); }
+    .meta-ver {
+      font-family: var(--fm); font-size: .68rem; color: var(--muted);
+      background: var(--surface2); border: 1px solid var(--border2);
+      padding: .12rem .5rem; border-radius: 3px;
+    }
+    .tags { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .tag {
+      font-family: var(--fm); font-size: .58rem; font-weight: 700;
+      padding: .12rem .45rem; border-radius: 3px; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .tag-green  { background: rgba(61,220,132,.1);  color: var(--accent); border: 1px solid rgba(61,220,132,.2); }
+    .tag-blue   { background: rgba(88,166,255,.1);  color: var(--blue);   border: 1px solid rgba(88,166,255,.2); }
+    .tag-orange { background: rgba(247,129,102,.1); color: var(--orange); border: 1px solid rgba(247,129,102,.2); }
+
+    .dl-btn {
+      display: inline-flex; align-items: center; gap: .6rem;
+      padding: .8rem 1.75rem;
+      background: var(--accent); border: none; border-radius: var(--r);
+      font-family: var(--fm); font-size: .78rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: #000; cursor: pointer; text-decoration: none;
+      transition: background .15s, transform .1s; margin-top: 1.1rem;
+    }
+    .dl-btn:hover { background: var(--accent-d); transform: translateY(-1px); }
+    .dl-btn:active { transform: translateY(0); }
+    .dl-btn.disabled {
+      background: var(--surface2); color: var(--muted);
+      border: 1px solid var(--border2); cursor: default;
+      pointer-events: none;
+    }
+
+    .section { margin-bottom: 2.5rem; animation: fadeUp .35s .06s ease both; }
+    .section-label {
+      font-family: var(--fm); font-size: .65rem; font-weight: 700;
+      color: var(--muted); letter-spacing: .14em; text-transform: uppercase;
+      margin-bottom: .9rem; display: flex; align-items: center; gap: .6rem;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .plugin-description {
+      font-size: .9rem; color: var(--muted); line-height: 1.8;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 1.25rem 1.4rem;
+    }
+
+    .meta-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;
+      animation: fadeUp .35s .1s ease both; margin-bottom: 2.5rem;
+    }
+    .meta-cell { background: var(--surface); padding: 1rem 1.2rem; }
+    .meta-cell-label {
+      font-family: var(--fm); font-size: .6rem; font-weight: 700;
+      color: var(--muted2); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .3rem;
+    }
+    .meta-cell-value { font-family: var(--fm); font-size: .82rem; font-weight: 500; color: var(--text); }
+
+    .versions-section { animation: fadeUp .35s .14s ease both; }
+    .versions-list { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .version-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .9rem 1.2rem; background: var(--surface);
+      border-bottom: 1px solid var(--border); transition: background .15s;
+    }
+    .version-row:last-child { border-bottom: none; }
+    .version-row:hover { background: var(--surface2); }
+    .version-left { display: flex; align-items: center; gap: .75rem; }
+    .version-name { font-family: var(--fm); font-size: .8rem; font-weight: 700; color: var(--text); }
+    .version-badge {
+      font-family: var(--fm); font-size: .58rem; font-weight: 700;
+      padding: .1rem .45rem; border-radius: 3px; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .badge-latest { background: rgba(61,220,132,.12); color: var(--accent); border: 1px solid rgba(61,220,132,.25); }
+    .version-size { font-family: var(--fm); font-size: .68rem; color: var(--muted); }
+    .dl-row-btn {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .4rem .85rem;
+      background: transparent; border: 1px solid var(--border2); border-radius: var(--r);
+      font-family: var(--fm); font-size: .68rem; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none; transition: all .15s;
+    }
+    .dl-row-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(61,220,132,.05); }
+
+    .empty-box { padding: 2rem; text-align: center; background: var(--surface); }
+    .empty-box p { font-family: var(--fm); font-size: .78rem; color: var(--muted); }
+
+    .footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border); padding: 1.5rem 2rem;
+      max-width: 860px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer p { font-family: var(--fm); font-size: .65rem; color: var(--muted); }
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 600px) {
+      nav, .wrap, .footer { padding-left: 1rem; padding-right: 1rem; }
+      .plugin-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .plugin-icon, .icon-fallback { width: 64px; height: 64px; border-radius: 10px; font-size: 1.8rem; }
+      .plugin-name { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">
+    <div class="logo-dot"></div>
+    EndstoneHub
+  </a>
+  <a class="back-btn" href="/">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    Back
+  </a>
+</nav>
+
+<div class="wrap" id="wrap">
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading plugin…</p>
+  </div>
+</div>
+
+<div class="footer">
+  <p>Built for the <a href="https://github.com/EndstoneMC/endstone" target="_blank">Endstone</a> community</p>
+  <p>Not affiliated with Mojang or Microsoft</p>
+</div>
+
+<script>
+const GH_USER = 'end-plugins';
+const GH_REPO = 'end-plugins.github.io';
+const LIST    = 'list';
+const RAW     = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main`;
+const API     = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents`;
+
+function esc(s) {
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtBytes(b) {
+  if (!b) return '';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+// Extract semver from filename:
+//   .whl → "myplugin-1.2.3-py3-none-any.whl"  (wheel standard: version is 2nd segment)
+//   .dll → "myplugin-1.2.3.dll"
+function parseVersion(filename) {
+  let m;
+  if (filename.endsWith('.whl')) {
+    m = filename.match(/^[^-]+-(\d+)\.(\d+)\.(\d+)-/);
+  } else {
+    m = filename.match(/[_-](\d+)\.(\d+)\.(\d+)\.\w+$/);
+  }
+  if (!m) return null;
+  return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
+}
+
+// Compare two semver arrays: returns >0 if a > b
+function cmpVer(a, b) {
+  for (let i = 0; i < 3; i++) {
+    if ((a[i]||0) !== (b[i]||0)) return (a[i]||0) - (b[i]||0);
+  }
+  return 0;
+}
+
+// Sort plugin files by semver descending (latest first)
+// Files without a version go to the bottom
+function sortByVersion(files) {
+  return [...files].sort((a, b) => {
+    const va = parseVersion(a.name);
+    const vb = parseVersion(b.name);
+    if (!va && !vb) return b.name.localeCompare(a.name);
+    if (!va) return 1;
+    if (!vb) return -1;
+    return cmpVer(vb, va);
+  });
+}
+
+function versionLabel(filename) {
+  const v = parseVersion(filename);
+  return v ? `v${v.join('.')}` : '';
+}
+
+const pluginId = new URLSearchParams(location.search).get('id');
+
+async function load() {
+  const wrap = document.getElementById('wrap');
+  if (!pluginId) {
+    wrap.innerHTML = `<div class="loading-state"><p>No plugin specified.</p></div>`;
+    return;
+  }
+  try {
+    const mRes = await fetch(`${RAW}/${LIST}/${pluginId}/manifest.json`);
+    if (!mRes.ok) throw new Error('not found');
+    const m = await mRes.json();
+
+    document.title = `${m.name} — EndstoneHub`;
+
+    // Fetch file list
+    const fRes = await fetch(`${API}/${LIST}/${pluginId}`);
+    const files = fRes.ok ? await fRes.json() : [];
+
+    // Filter plugin files and sort by semver
+    const raw = files.filter(f =>
+      f.type === 'file' && (f.name.endsWith('.whl') || f.name.endsWith('.dll'))
+    );
+    const pluginFiles = sortByVersion(raw);
+    const latest = pluginFiles[0] || null;
+
+    // Latest version label from filename
+    const latestVer = latest ? versionLabel(latest.name) : null;
+
+    const t = (m.type||'').toLowerCase();
+    const isPy = t === 'python' || t === 'py' || t === 'whl';
+    const ext = isPy ? '.whl' : '.dll';
+    const typeCls = isPy ? 'tag-green' : 'tag-blue';
+    const iconURL = `${RAW}/${LIST}/${pluginId}/icon.png`;
+
+    const extraTags = (m.tags||[]).map(tag =>
+      `<span class="tag tag-orange">${esc(tag)}</span>`).join('');
+
+    const dlBtn = latest
+      ? `<a class="dl-btn" href="${esc(latest.download_url)}" download>
+           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+             <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+           </svg>
+           Download Latest ${latestVer ? `<span style="opacity:.6;font-weight:400">${latestVer}</span>` : ''}
+         </a>`
+      : `<span class="dl-btn disabled">No files available</span>`;
+
+    const versionsHTML = pluginFiles.length
+      ? pluginFiles.map((f, i) => {
+          const ver = versionLabel(f.name);
+          return `
+          <div class="version-row">
+            <div class="version-left">
+              <span class="version-name">${esc(f.name)}</span>
+              ${i === 0 ? '<span class="version-badge badge-latest">latest</span>' : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <span class="version-size">${fmtBytes(f.size)}</span>
+              <a class="dl-row-btn" href="${esc(f.download_url)}" download>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                ${ver || 'Download'}
+              </a>
+            </div>
+          </div>`;
+        }).join('')
+      : `<div class="empty-box"><p>No plugin files found in this folder yet.</p></div>`;
+
+    wrap.innerHTML = `
+      <div class="plugin-header">
+        <img class="plugin-icon" src="${iconURL}"
+          onerror="this.outerHTML='<div class=&quot;icon-fallback&quot;>🧩</div>'" alt="${esc(m.name)}">
+        <div class="header-info">
+          <div class="plugin-name">${esc(m.name)}</div>
+          <div class="meta-row">
+            <span class="meta-author">by ${esc(m.author||'unknown')}</span>
+            ${latestVer ? `<span class="meta-ver">${esc(latestVer)}</span>` : ''}
+          </div>
+          <div class="tags">
+            <span class="tag ${typeCls}">${ext}</span>${extraTags}
+          </div>
+          ${dlBtn}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Description</div>
+        <div class="plugin-description">${esc(m.description||'No description provided.')}</div>
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-cell">
+          <div class="meta-cell-label">Latest Version</div>
+          <div class="meta-cell-value">${latestVer || '—'}</div>
+        </div>
+        <div class="meta-cell">
+          <div class="meta-cell-label">Author</div>
+          <div class="meta-cell-value">${esc(m.author||'—')}</div>
+        </div>
+        <div class="meta-cell">
+          <div class="meta-cell-label">Type</div>
+          <div class="meta-cell-value">${esc(ext)}</div>
+        </div>
+        <div class="meta-cell">
+          <div class="meta-cell-label">Releases</div>
+          <div class="meta-cell-value">${pluginFiles.length}</div>
+        </div>
+        ${m.source ? `
+        <div class="meta-cell">
+          <div class="meta-cell-label">Source</div>
+          <div class="meta-cell-value">
+            <a href="${esc(m.source)}" target="_blank" style="color:var(--blue);text-decoration:none;">GitHub ↗</a>
+          </div>
+        </div>` : ''}
+      </div>
+
+      <div class="versions-section">
+        <div class="section-label">Versions</div>
+        <div class="versions-list">${versionsHTML}</div>
+      </div>
+    `;
+  } catch {
+    document.getElementById('wrap').innerHTML = `
+      <div class="loading-state">
+        <p>Plugin not found or failed to load.<br><br>
+          <a href="/" style="color:var(--accent);text-decoration:none;font-family:var(--fm);font-size:.75rem;">← Back to all plugins</a>
+        </p>
+      </div>`;
+  }
+}
+
+load();
+</script>
+</body>
+</html>
