@@ -417,7 +417,7 @@ function render() {
       : `${list.length} / ${allPlugins.length}`;
 
   if (!list.length) {
-    grid.innerHTML = `<div class="state-row"><p>No plugins match.</p></div>`;
+    grid.innerHTML = '';
     return;
   }
 
@@ -504,12 +504,6 @@ document.getElementById('search').addEventListener('input', () => { clearTimeout
 
 (async () => {
   allPlugins = await discover();
-  if (!allPlugins.length) {
-    document.getElementById('grid').innerHTML =
-      `<div class="state-row"><p>No plugins found. Add folders with <code style="color:var(--accent)">manifest.json</code> to <code style="color:var(--accent)">list/</code>.</p></div>`;
-    document.getElementById('resultsCount').textContent = '0 plugins';
-    return;
-  }
   render();
 })();
 </script>
