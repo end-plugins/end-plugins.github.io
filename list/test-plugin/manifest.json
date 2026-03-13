@@ -1,0 +1,8 @@
+{
+  "name": "Test Plugin",
+  "author": "end-plugins",
+  "description": "A test plugin to verify the EndstoneHub site works correctly.",
+  "type": "python",
+  "tags": ["utility"],
+  "source": "https://github.com/end-plugins/end-plugins.github.io"
+}
