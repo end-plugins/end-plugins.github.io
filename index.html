@@ -1,4 +1,517 @@
 <!DOCTYPE html>
-<head> 
-  test 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EndstoneHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #080b0f;
+      --surface:  #0d1117;
+      --surface2: #131920;
+      --border:   #1c2330;
+      --border2:  #242e3f;
+      --accent:   #3ddc84;
+      --accent-d: #28b868;
+      --blue:     #58a6ff;
+      --orange:   #f78166;
+      --text:     #e2eaf4;
+      --muted:    #5a6a82;
+      --muted2:   #3d4e63;
+      --ff: 'Outfit', sans-serif;
+      --fm: 'IBM Plex Mono', monospace;
+      --r: 4px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--ff); min-height: 100vh; overflow-x: hidden;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(61,220,132,.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,220,132,.022) 1px, transparent 1px);
+      background-size: 36px 36px; pointer-events: none; z-index: 0;
+    }
+
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 58px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      background: rgba(8,11,15,.92); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: flex; align-items: center; gap: .55rem;
+      font-weight: 800; font-size: 1rem; letter-spacing: -.02em;
+      color: var(--text); text-decoration: none;
+    }
+    .logo-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 8px var(--accent);
+      animation: glow 2.5s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%,100% { box-shadow: 0 0 5px var(--accent); }
+      50%      { box-shadow: 0 0 16px var(--accent), 0 0 30px rgba(61,220,132,.3); }
+    }
+    .nav-link {
+      font-family: var(--fm); font-size: .7rem; font-weight: 500;
+      color: var(--muted); text-decoration: none; letter-spacing: .06em;
+      text-transform: uppercase; transition: color .15s;
+    }
+    .nav-link:hover { color: var(--accent); }
+
+    .hero {
+      position: relative; z-index: 1;
+      padding: 5rem 2rem 3.5rem; max-width: 1080px; margin: 0 auto;
+    }
+    .hero-eyebrow {
+      font-family: var(--fm); font-size: .65rem; font-weight: 500;
+      color: var(--accent); letter-spacing: .15em; text-transform: uppercase;
+      margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem;
+    }
+    .hero-eyebrow::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5vw, 4.5rem);
+      font-weight: 800; line-height: 1.05; letter-spacing: -.04em; margin-bottom: 1rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--blue) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub { color: var(--muted); font-size: .95rem; line-height: 1.7; max-width: 420px; }
+
+    .toolbar {
+      position: relative; z-index: 1;
+      max-width: 1080px; margin: 0 auto;
+      padding: 0 2rem 1.5rem;
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .search-wrap {
+      flex: 1; display: flex; align-items: center; gap: .6rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      padding: .55rem 1rem; transition: border-color .2s;
+    }
+    .search-wrap:focus-within { border-color: var(--accent); }
+    .search-wrap svg { color: var(--muted); flex-shrink: 0; }
+    .search-wrap input {
+      background: none; border: none; outline: none;
+      color: var(--text); font-family: var(--fm); font-size: .8rem; width: 100%;
+    }
+    .search-wrap input::placeholder { color: var(--muted2); }
+    .btn-filter {
+      display: flex; align-items: center; gap: .45rem;
+      padding: .55rem 1.1rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      font-family: var(--fm); font-size: .72rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text); cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .btn-filter:hover, .btn-filter.active {
+      border-color: var(--accent); color: var(--accent); background: rgba(61,220,132,.06);
+    }
+    .filter-badge {
+      background: var(--accent); color: #000;
+      font-size: .6rem; font-weight: 700;
+      padding: .1rem .35rem; border-radius: 999px; display: none;
+    }
+    .filter-badge.visible { display: inline; }
+    .results-count { font-family: var(--fm); font-size: .72rem; color: var(--muted); white-space: nowrap; }
+
+    /* FILTER PANEL */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(3px);
+      align-items: flex-start; justify-content: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+    .filter-panel {
+      margin: 58px 0 0; width: 300px; min-height: calc(100vh - 58px);
+      background: var(--surface); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      animation: slideIn .18s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(40px); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+    .fp-header {
+      padding: 1.15rem 1.4rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .fp-header h3 { font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .close-btn {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      padding: .2rem; border-radius: 3px; transition: color .15s; line-height: 0;
+    }
+    .close-btn:hover { color: var(--text); }
+    .fp-section { padding: 1.15rem 1.4rem; border-bottom: 1px solid var(--border); }
+    .fp-title {
+      font-family: var(--fm); font-size: .62rem; font-weight: 700;
+      color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8rem;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip {
+      padding: .3rem .8rem; border-radius: 999px;
+      border: 1px solid var(--border2); background: var(--surface2);
+      font-family: var(--fm); font-size: .68rem; font-weight: 500;
+      color: var(--muted); cursor: pointer; transition: all .15s; user-select: none;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+    .chip.sel { border-color: var(--accent); color: var(--accent); background: rgba(61,220,132,.1); }
+    .fp-actions { margin-top: auto; padding: 1.15rem 1.4rem; display: flex; gap: .55rem; }
+    .btn-apply {
+      flex: 1; padding: .65rem;
+      background: var(--accent); border: none; border-radius: var(--r);
+      font-family: var(--fm); font-size: .72rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: #000; cursor: pointer; transition: background .15s;
+    }
+    .btn-apply:hover { background: var(--accent-d); }
+    .btn-reset {
+      padding: .65rem 1rem;
+      background: transparent; border: 1px solid var(--border); border-radius: var(--r);
+      font-family: var(--fm); font-size: .72rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer; transition: all .15s;
+    }
+    .btn-reset:hover { border-color: var(--orange); color: var(--orange); }
+
+    .grid-wrap {
+      position: relative; z-index: 1;
+      max-width: 1080px; margin: 0 auto; padding: 0 2rem 5rem;
+    }
+    .plugin-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;
+    }
+    .plugin-card {
+      background: var(--surface); padding: 1.35rem;
+      display: flex; flex-direction: column; gap: .85rem;
+      text-decoration: none; color: inherit;
+      transition: background .15s; position: relative; overflow: hidden;
+    }
+    .plugin-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px; background: var(--accent);
+      transform: scaleX(0); transform-origin: left; transition: transform .22s;
+    }
+    .plugin-card:hover { background: var(--surface2); }
+    .plugin-card:hover::after { transform: scaleX(1); }
+    .card-head { display: flex; align-items: flex-start; gap: .9rem; }
+    .plugin-icon {
+      width: 48px; height: 48px; border-radius: 8px;
+      object-fit: cover; border: 1px solid var(--border2);
+      background: var(--surface2); flex-shrink: 0;
+    }
+    .icon-fallback {
+      width: 48px; height: 48px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--surface2), var(--border));
+      border: 1px solid var(--border2); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    }
+    .card-title { flex: 1; min-width: 0; }
+    .plugin-name {
+      font-size: .95rem; font-weight: 700; letter-spacing: -.01em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: .15rem;
+    }
+    .plugin-author { font-family: var(--fm); font-size: .65rem; color: var(--blue); }
+    .plugin-ver {
+      font-family: var(--fm); font-size: .62rem; color: var(--muted);
+      background: var(--surface2); border: 1px solid var(--border2);
+      padding: .12rem .45rem; border-radius: 3px; white-space: nowrap; align-self: flex-start;
+    }
+    .plugin-desc {
+      font-size: .82rem; color: var(--muted); line-height: 1.65;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .card-foot {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: .75rem; border-top: 1px solid var(--border); margin-top: auto;
+    }
+    .tags { display: flex; gap: .35rem; flex-wrap: wrap; }
+    .tag {
+      font-family: var(--fm); font-size: .58rem; font-weight: 700;
+      padding: .12rem .45rem; border-radius: 3px; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .tag-green  { background: rgba(61,220,132,.1);  color: var(--accent); border: 1px solid rgba(61,220,132,.2); }
+    .tag-blue   { background: rgba(88,166,255,.1);  color: var(--blue);   border: 1px solid rgba(88,166,255,.2); }
+    .tag-orange { background: rgba(247,129,102,.1); color: var(--orange); border: 1px solid rgba(247,129,102,.2); }
+    .dl-count { display: flex; align-items: center; gap: .3rem; font-family: var(--fm); font-size: .68rem; color: var(--muted); }
+
+    .state-row { grid-column: 1/-1; padding: 3.5rem; text-align: center; background: var(--surface); }
+    .state-row p { font-family: var(--fm); font-size: .8rem; color: var(--muted); }
+    .spinner {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--border2); border-top-color: var(--accent);
+      animation: spin .6s linear infinite; margin: 0 auto .75rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border); padding: 1.5rem 2rem;
+      max-width: 1080px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer p { font-family: var(--fm); font-size: .65rem; color: var(--muted); }
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-eyebrow { animation: fadeUp .4s ease both; }
+    .hero h1      { animation: fadeUp .4s .08s ease both; }
+    .hero-sub     { animation: fadeUp .4s .16s ease both; }
+
+    @media (max-width: 600px) {
+      nav, .hero, .toolbar, .grid-wrap, .footer { padding-left: 1rem; padding-right: 1rem; }
+      .filter-panel { width: 100vw; }
+    }
+  </style>
 </head>
+<body>
+
+<nav>
+  <a class="logo" href="/">
+    <div class="logo-dot"></div>
+    EndstoneHub
+  </a>
+  <a class="nav-link" href="https://github.com/EndstoneMC/endstone" target="_blank">Endstone ↗</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">Plugin Registry</div>
+  <h1>Plugins for<br /><em>Endstone</em></h1>
+  <p class="hero-sub">Community-built plugins for your Bedrock Dedicated Server. Browse and install in seconds.</p>
+</section>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input id="search" type="text" placeholder="Search plugins…" />
+  </div>
+  <button class="btn-filter" id="filterBtn">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+    </svg>
+    Filter
+    <span class="filter-badge" id="filterBadge">0</span>
+  </button>
+  <span class="results-count" id="resultsCount"></span>
+</div>
+
+<div class="modal-overlay" id="overlay">
+  <div class="filter-panel">
+    <div class="fp-header">
+      <h3>Filter Plugins</h3>
+      <button class="close-btn" id="closeFilter">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Plugin Type</div>
+      <div class="chips">
+        <div class="chip" data-group="type" data-val="python">.whl — Python</div>
+        <div class="chip" data-group="type" data-val="cpp">.dll — C++</div>
+      </div>
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Category</div>
+      <div class="chips">
+        <div class="chip" data-group="cat" data-val="utility">Utility</div>
+        <div class="chip" data-group="cat" data-val="gameplay">Gameplay</div>
+        <div class="chip" data-group="cat" data-val="admin">Admin</div>
+        <div class="chip" data-group="cat" data-val="economy">Economy</div>
+        <div class="chip" data-group="cat" data-val="protection">Protection</div>
+        <div class="chip" data-group="cat" data-val="minigame">Minigame</div>
+        <div class="chip" data-group="cat" data-val="chat">Chat</div>
+        <div class="chip" data-group="cat" data-val="world">World</div>
+      </div>
+    </div>
+    <div class="fp-actions">
+      <button class="btn-reset" id="resetFilter">Reset</button>
+      <button class="btn-apply" id="applyFilter">Apply</button>
+    </div>
+  </div>
+</div>
+
+<div class="grid-wrap">
+  <div class="plugin-grid" id="grid">
+    <div class="state-row"><div class="spinner"></div><p>Discovering plugins…</p></div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>Built for the <a href="https://github.com/EndstoneMC/endstone" target="_blank">Endstone</a> community</p>
+  <p>Not affiliated with Mojang or Microsoft</p>
+</div>
+
+<script>
+const GH_USER = 'end-plugins';
+const GH_REPO = 'end-plugins.github.io';
+const LIST    = 'list';
+const RAW     = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main`;
+const API     = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents`;
+
+let allPlugins = [];
+let pendingType = new Set(), pendingCat = new Set();
+let activeType  = new Set(), activeCat  = new Set();
+
+async function discover() {
+  try {
+    const r = await fetch(`${API}/${LIST}`);
+    if (!r.ok) throw 0;
+    const entries = await r.json();
+    const dirs = entries.filter(e => e.type === 'dir');
+    const manifests = await Promise.all(dirs.map(async d => {
+      try {
+        const mr = await fetch(`${RAW}/${LIST}/${d.name}/manifest.json`);
+        if (!mr.ok) return null;
+        const m = await mr.json();
+        m._id = d.name;
+        return m;
+      } catch { return null; }
+    }));
+    return manifests.filter(Boolean);
+  } catch { return []; }
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const grid = document.getElementById('grid');
+
+  const list = allPlugins.filter(p => {
+    const t = (p.type || '').toLowerCase();
+    const isPy = t === 'python' || t === 'py' || t === 'whl';
+    const isCpp = t === 'cpp' || t === 'c++' || t === 'dll';
+    if (activeType.size > 0) {
+      if (!(activeType.has('python') && isPy) && !(activeType.has('cpp') && isCpp)) return false;
+    }
+    if (activeCat.size > 0) {
+      const tags = (p.tags || []).map(x => x.toLowerCase());
+      if (![...activeCat].some(c => tags.includes(c))) return false;
+    }
+    if (q) {
+      const hay = [p.name, p.author, p.description, ...(p.tags||[])].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('resultsCount').textContent =
+    list.length === allPlugins.length
+      ? `${allPlugins.length} plugin${allPlugins.length !== 1 ? 's' : ''}`
+      : `${list.length} / ${allPlugins.length}`;
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="state-row"><p>No plugins match.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    const t = (p.type||'').toLowerCase();
+    const isPy = t === 'python' || t === 'py' || t === 'whl';
+    const ext = isPy ? '.whl' : '.dll';
+    const typeCls = isPy ? 'tag-green' : 'tag-blue';
+    const icon = `${RAW}/${LIST}/${p._id}/icon.png`;
+    const extraTags = (p.tags||[]).slice(0,2).map(t =>
+      `<span class="tag tag-orange">${esc(t)}</span>`).join('');
+    return `
+    <a class="plugin-card" href="plugin.html?id=${esc(p._id)}">
+      <div class="card-head">
+        <img class="plugin-icon" src="${icon}"
+          onerror="this.outerHTML='<div class=&quot;icon-fallback&quot;>🧩</div>'" alt="${esc(p.name)}">
+        <div class="card-title">
+          <div class="plugin-name">${esc(p.name)}</div>
+          <div class="plugin-author">by ${esc(p.author||'unknown')}</div>
+        </div>
+
+      </div>
+      <p class="plugin-desc">${esc(p.description||'')}</p>
+      <div class="card-foot">
+        <div class="tags">
+          <span class="tag ${typeCls}">${ext}</span>${extraTags}
+        </div>
+        <div class="dl-count">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>${p.downloads??0}
+        </div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Filter panel
+const overlay = document.getElementById('overlay');
+const filterBtn = document.getElementById('filterBtn');
+const badge = document.getElementById('filterBadge');
+
+filterBtn.addEventListener('click', () => {
+  pendingType = new Set(activeType); pendingCat = new Set(activeCat);
+  syncChips(); overlay.classList.add('open');
+});
+document.getElementById('closeFilter').addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const set = chip.dataset.group === 'type' ? pendingType : pendingCat;
+    set.has(chip.dataset.val) ? set.delete(chip.dataset.val) : set.add(chip.dataset.val);
+    chip.classList.toggle('sel');
+  });
+});
+
+function syncChips() {
+  document.querySelectorAll('.chip').forEach(chip => {
+    const set = chip.dataset.group === 'type' ? pendingType : pendingCat;
+    chip.classList.toggle('sel', set.has(chip.dataset.val));
+  });
+}
+
+document.getElementById('applyFilter').addEventListener('click', () => {
+  activeType = new Set(pendingType); activeCat = new Set(pendingCat);
+  const n = activeType.size + activeCat.size;
+  badge.textContent = n; badge.classList.toggle('visible', n > 0);
+  filterBtn.classList.toggle('active', n > 0);
+  overlay.classList.remove('open'); render();
+});
+
+document.getElementById('resetFilter').addEventListener('click', () => {
+  pendingType.clear(); pendingCat.clear(); syncChips();
+});
+
+let t;
+document.getElementById('search').addEventListener('input', () => { clearTimeout(t); t = setTimeout(render, 160); });
+
+(async () => {
+  allPlugins = await discover();
+  if (!allPlugins.length) {
+    document.getElementById('grid').innerHTML =
+      `<div class="state-row"><p>No plugins found. Add folders with <code style="color:var(--accent)">manifest.json</code> to <code style="color:var(--accent)">list/</code>.</p></div>`;
+    document.getElementById('resultsCount').textContent = '0 plugins';
+    return;
+  }
+  render();
+})();
+</script>
+</body>
+</html>
