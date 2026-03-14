@@ -299,23 +299,38 @@ function versionLabel(filename) {
   return v ? `v${v.join('.')}` : '';
 }
 
-const pluginId = new URLSearchParams(location.search).get('id');
+const pluginNumId = new URLSearchParams(location.search).get('id');
 
 async function load() {
   const wrap = document.getElementById('wrap');
-  if (!pluginId) {
+  if (!pluginNumId) {
     wrap.innerHTML = `<div class="loading-state"><p>No plugin specified.</p></div>`;
     return;
   }
   try {
-    const mRes = await fetch(`${RAW}/${LIST}/${pluginId}/manifest.json`);
-    if (!mRes.ok) throw new Error('not found');
-    const m = await mRes.json();
+    // Find folder whose manifest.id matches the numeric id in URL
+    const dirRes = await fetch(`${API}/${LIST}`);
+    if (!dirRes.ok) throw new Error('Cannot list plugins');
+    const entries = await dirRes.json();
+    const dirs = entries.filter(e => e.type === 'dir');
+
+    let m = null, folder = null;
+    for (const d of dirs) {
+      try {
+        const mr = await fetch(`${RAW}/${LIST}/${d.name}/manifest.json`);
+        if (!mr.ok) continue;
+        const data = await mr.json();
+        if (String(data.id) === String(pluginNumId)) {
+          m = data; folder = d.name; break;
+        }
+      } catch { continue; }
+    }
+    if (!m || !folder) throw new Error('not found');
 
     document.title = `${m.name} — EndstoneHub`;
 
-    // Fetch file list
-    const fRes = await fetch(`${API}/${LIST}/${pluginId}`);
+    // Fetch file list from found folder
+    const fRes = await fetch(`${API}/${LIST}/${folder}`);
     const files = fRes.ok ? await fRes.json() : [];
 
     // Filter plugin files and sort by semver
@@ -332,7 +347,7 @@ async function load() {
     const isPy = t === 'python' || t === 'py' || t === 'whl';
     const ext = isPy ? '.whl' : '.dll';
     const typeCls = isPy ? 'tag-green' : 'tag-blue';
-    const iconURL = `${RAW}/${LIST}/${pluginId}/icon.png`;
+    const iconURL = `${RAW}/${LIST}/${folder}/icon.png`;
 
     const extraTags = (m.tags||[]).map(tag =>
       `<span class="tag tag-orange">${esc(tag)}</span>`).join('');
