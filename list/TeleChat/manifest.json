@@ -5,5 +5,5 @@
   "description": "Sending message from Minecraft to Telegram/from Telegram to Minecraft. First put your chat_id and bot_token (Get in @BotFather)",
   "type": "cpp",
   "tags": ["utility", "chat"],
-  "source": ""
+  "source": "https://github.com/end-plugins/end-plugins.github.io"
 }
